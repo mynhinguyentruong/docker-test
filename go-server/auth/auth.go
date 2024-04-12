@@ -12,7 +12,6 @@ import (
 )
 
 func Sign(message []byte) (string, error) {
-
   privateKey, err := LoadPrivateKeyFromENV()
   if err != nil {
     slog.Debug(fmt.Sprintln(err))
@@ -26,8 +25,8 @@ func Sign(message []byte) (string, error) {
   if err != nil {
     slog.Debug(fmt.Sprintln(err))
   }
-  publicKey := base64.StdEncoding.EncodeToString(publicKeyData)
 
+  publicKey := base64.StdEncoding.EncodeToString(publicKeyData)
 
 	// signature is <publicKey>:<signature>
   return fmt.Sprintf("%s:%s", publicKey, signature), nil
@@ -37,18 +36,18 @@ func LoadPrivateKeyFromENV() (ed25519.PrivateKey, error) {
 	pemString := os.Getenv("PEM_PRIVATE_KEY")
 	if pemString == "" {
 		slog.Debug("Failed to get pemString from ENV, have you set up your environment variable?", "line", "22")
-		return []byte(pemString), fmt.Errorf("empty PEM_PRIVATE_KEY ENV")
+		return nil, fmt.Errorf("empty PEM_PRIVATE_KEY ENV")
 	}
 
 	privateKey, err := ssh.ParseRawPrivateKey([]byte(pemString))
 	if err != nil {
-		return []byte(""), fmt.Errorf("failed to parse raw private_key from pem string")
+		return nil, fmt.Errorf("failed to parse raw private_key from pem string")
 	}
 
 	// Type assertion to *ed25519.PrivateKey type
 	ed25519PrivateKey, ok := privateKey.(*ed25519.PrivateKey)
 	if !ok {
-		return []byte(""), fmt.Errorf("failed to assert type into *ed25519.PrivateKey")
+		return nil, fmt.Errorf("failed to assert type into *ed25519.PrivateKey")
 	}
 
 	// dereferencing the pointer
