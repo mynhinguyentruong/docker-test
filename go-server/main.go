@@ -1,194 +1,3 @@
-// package main
-//
-// import (
-// 	"bufio"
-// 	"bytes"
-// 	"encoding/json"
-// 	"fmt"
-// 	"io"
-// 	"log/slog"
-// 	"net/http"
-// 	"time"
-//
-// 	"github.com/gin-gonic/gin"
-// )
-//
-// // https://docker-test.fly.dev/api/chat
-//
-// // Message represents the nested message object in the JSON response
-// type Message struct {
-// 	Role    string `json:"role"`
-// 	Content string `json:"content"`
-// }
-//
-// // Response represents the entire JSON response
-// type Response struct {
-// 	Model     string    `json:"model"`
-// 	CreatedAt time.Time `json:"created_at"`
-// 	Message   Message   `json:"message"`
-// 	Done      bool      `json:"done"`
-// }
-//
-// type RequestBody struct {
-// 	Model   string  `json:"model"`
-// 	Message Message `json:"message"`
-// }
-//
-// func main() {
-// 	r := gin.Default()
-// 	r.GET("/ping", func(c *gin.Context) {
-// 		slog.Info("making request to go server two... ")
-//
-// 		// Do the same thing to internal LLM Server here
-// 		res, err := http.Get("http://go-server-two.internal:8080/ping")
-// 		if err != nil {
-//
-// 			c.JSON(http.StatusOK, gin.H{
-// 				"message": "error",
-// 			})
-// 			slog.Error("error line 22")
-//
-// 		}
-//
-// 		body, err := io.ReadAll(res.Body)
-// 		res.Body.Close()
-// 		if res.StatusCode > 299 {
-// 			c.JSON(http.StatusOK, gin.H{
-// 				"message": "statuscode weird",
-// 			})
-// 			slog.Error("Response failed with status code: %d and\nbody: %s\n", res.StatusCode, body)
-// 		}
-// 		if err != nil {
-//
-// 			c.JSON(http.StatusOK, gin.H{
-// 				"message": "error at line 31",
-// 			})
-// 			slog.Error("Error at line 31 of code")
-// 		}
-// 		fmt.Printf("%s", body)
-//
-// 		c.JSON(http.StatusOK, gin.H{
-// 			"message": "pong",
-// 		})
-// 	})
-//
-// 	// make post request to https://docker-test.fly.dev/api/chat
-// 	//   {
-// 	//   "model": "mistral",
-// 	//   "messages": [
-// 	//     { "role": "user", "content": "tell me a joke for today" }
-// 	//   ]
-// 	// }
-//
-// 	// Parse the reponse
-// 	// Unmarshal JSON data into a Response struct
-// 	r.GET("/", func(c *gin.Context) {
-// 		// message := ""
-// 		// Prepare the request body
-// 		requestBody := RequestBody{
-// 			Model: "mistral",
-// 			Message: Message{
-// 				Role:    "user",
-// 				Content: "tell me a funny joke that I will remember for the rest of my life",
-// 			},
-// 		}
-//
-// 		// Convert the request body to JSON
-// 		requestBodyBytes, err := json.Marshal(requestBody)
-// 		if err != nil {
-// 			fmt.Println("Error marshalling JSON:", err)
-// 			return
-// 		}
-//
-// 		resp, err := http.Post("https://docker-test.fly.dev/api/chat", "application/json", bytes.NewBuffer(requestBodyBytes))
-// 		if err != nil {
-// 			fmt.Println("Error making POST request:", err)
-// 			return
-// 		}
-// 		defer resp.Body.Close()
-//
-// 		// Check the response status
-// 		if resp.StatusCode != http.StatusOK {
-// 			fmt.Println("Error: Unexpected response status code:", resp.StatusCode)
-// 			return
-// 		}
-//
-// 		// haha, err := io.ReadAll(resp.Body)
-// 		// if err != nil {
-// 		// 	panic(err)
-// 		// }
-// 		// lines := bytes.Split(haha, []byte("\n"))
-//   //   fmt.Println("Lines: ", len(lines))
-// 		//
-// 		// for _, line := range lines {
-// 		// 	// Create a new Response struct to hold the parsed data
-// 		// 	var response map[string]interface{}
-// 		//
-// 		// 	// Unmarshal the JSON into the Response struct
-// 		// 	err := json.Unmarshal(line, &response)
-// 		// 	if err != nil {
-// 		// 		fmt.Println("Error unmarshalling JSON:", err)
-// 		// 		continue
-// 		// 	}
-// 		//
-// 		// 	fmt.Println("Response: ", response)
-// 		// }
-// 		// Create a new scanner to read the response body line by line
-// 		scanner := bufio.NewScanner(resp.Body)
-// 		// scanner.Split(bufio.ScanLines)
-// 		//   fmt.Println("scanner.text: ", scanner.Text())
-//
-// 		str := ""
-//
-// 		// Iterate over each line
-// 		for scanner.Scan() {
-// 			fmt.Println("I looped")
-// 			// Extract the JSON string from the line
-// 			jsonString := scanner.Bytes()
-// 			fmt.Println("jsonString: ", jsonString)
-// 			str = str + string(jsonString)
-//
-// 			// Decode the JSON string into a Response struct
-// 			var response map[string]interface{}
-// 			err := json.Unmarshal(jsonString, &response)
-// 			if err != nil {
-// 				fmt.Println("Error decoding JSON:", err)
-// 				continue
-// 			}
-//
-// 			// Print the content from each response
-// 			fmt.Println("Content:", response)
-//
-// 			// c.JSON(http.StatusOK, gin.H{
-// 			// 	"message": response,
-// 			// })
-//
-// 		}
-//
-// 		c.JSON(http.StatusOK, gin.H{
-// 			"message": str,
-// 		})
-//
-// 		// Check for any scanning errors
-// 		// if err := scanner.Err(); err != nil {
-// 		// 	fmt.Println("Error scanning:", err)
-// 		// }
-// 		// Read the response body
-// 		// var responseData map[string]interface{}
-// 		// if err := json.NewDecoder(resp.Body).Decode(&responseData); err != nil {
-// 		// 	fmt.Println("Error decoding response JSON:", err)
-// 		// 	return
-// 		// }
-// 		//
-// 		// // Print the response data
-// 		// fmt.Println("Response Data:", responseData)
-//
-// 	})
-// 	// var response Response
-//
-// 	r.Run() // listen and serve on 0.0.0.0:8080
-// }
-
 package main
 
 import (
@@ -197,12 +6,15 @@ import (
 	"crypto/ed25519"
 	"encoding/base64"
 	"encoding/json"
+	"errors"
 	"fmt"
-
-	"log"
+	"golang.org/x/crypto/ssh"
+	// "log"
 	"log/slog"
 	"net/http"
+	"os"
 	"time"
+	// "github.com/joho/godotenv"
 )
 
 type ChatResponse struct {
@@ -312,26 +124,27 @@ func AuthenticationMiddleware() Middleware {
 			message := r.Header.Get("LoveLoomAI-Message")
 			public_key := r.Header.Get("LoveLoomAI-Publickey")
 
-			public_key_bytes, _ := base64.StdEncoding.DecodeString(public_key)
+			public_key_in_bytes, _ := base64.StdEncoding.DecodeString(public_key)
 
-			pub, _, err := ed25519.GenerateKey(nil)
-			if err != nil {
-				log.Fatal(err)
-			}
-			fmt.Println("public_key", string(pub))
+			// pub, _, err := ed25519.GenerateKey(nil)
+			// if err != nil {
+			// 	log.Fatal(err)
+			// }
+			// fmt.Println("public_key", string(pub))
 
 			if signature == "" || message == "" || public_key == "" {
 				http.Error(w, "Bad Request: Missing required headers: LoveLoomAI-Signature, LoveLoomAI-Message, LoveLoomAI-Publickey", http.StatusBadRequest)
 				return
 			}
 
-			if len([]byte(public_key_bytes)) != 32 {
+			// Check the length to avoid panic in Verify method
+			if len(public_key_in_bytes) != 32 {
 				http.Error(w, "Bad Request: LoveLoomAI-Publickey has bad public key length", http.StatusBadRequest)
 				return
 
 			}
 
-			if isValid := VerifySignature(public_key_bytes, signature, message); !isValid {
+			if isValid := VerifySignature(public_key_in_bytes, signature, message); !isValid {
 				slog.Error("Unauthorized Request")
 				http.Error(w, http.StatusText(http.StatusUnauthorized), http.StatusUnauthorized)
 				return
@@ -341,8 +154,9 @@ func AuthenticationMiddleware() Middleware {
 }
 
 func VerifySignature(public_key ed25519.PublicKey, signature string, message string) bool {
+	signature_in_bytes, _ := base64.StdEncoding.DecodeString(signature)
 
-	isValid := ed25519.Verify([]byte(public_key), []byte(message), []byte(signature))
+	isValid := ed25519.Verify(public_key, []byte(message), signature_in_bytes)
 
 	return isValid
 }
@@ -395,7 +209,40 @@ func Chain(f http.HandlerFunc, middlewares ...Middleware) http.HandlerFunc {
 	return f
 }
 
+func mustNot(err error) {
+	if err != nil {
+		panic(err)
+	}
+}
+
+func GetPublicKeyFromPrivateKey(private_key ed25519.PrivateKey) (ed25519.PublicKey, error) {
+	cryptoPublicKey := private_key.Public()
+
+	// type assertion
+	pubkey, ok := cryptoPublicKey.(ed25519.PublicKey)
+	if !ok {
+		return nil, errors.New("failed to assert into ed25519.PublicKey type")
+	}
+
+	sEnc := base64.StdEncoding.EncodeToString(pubkey)
+	fmt.Println("pubkey", sEnc)
+
+	return pubkey, nil
+}
+
 func main() {
+	myKey, err := LoadPrivateKeyFromENV()
+	mustNot(err)
+
+	message_in_bytes := ed25519.Sign(myKey, []byte("abc"))
+	fmt.Println("message_in_bytes: ", message_in_bytes)
+	sEnc := base64.StdEncoding.EncodeToString(message_in_bytes)
+	fmt.Println("signature", sEnc)
+
+	// 2. Get public key
+	ed25519Pubkey, _ := GetPublicKeyFromPrivateKey(myKey)
+
+	slog.Info("PUBKEY", "pub", ed25519Pubkey)
 
 	// Define the JSON payload
 
@@ -416,7 +263,7 @@ func main() {
 
 	// Start the server
 	slog.Info("Server listening on port 8080...")
-	err := server.ListenAndServe()
+	err = server.ListenAndServe()
 	if err != nil {
 		fmt.Println("Error starting server:", err)
 	}
@@ -444,7 +291,7 @@ func ChatHandler(w http.ResponseWriter, r *http.Request) {
 
 	go GetOllamaStreamResponses(messages, ollamaPrompt.Prompt)
 
-	str := <- messages
+	str := <-messages
 
 	slog.Info("Received chat response ", "chat_response", str)
 	w.Header().Set("Content-Type", "application/json")
@@ -458,5 +305,28 @@ func ChatHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	w.Write(responseJSON)
+
+}
+
+func LoadPrivateKeyFromENV() (ed25519.PrivateKey, error) {
+	// err := godotenv.Load()
+	// if err != nil {
+	// 	log.Fatal("Error loading .env file")
+	// }
+
+	pemString := os.Getenv("PEM_PRIVATE_KEY")
+
+	privateKey, err := ssh.ParseRawPrivateKey([]byte(pemString))
+	if err != nil {
+		return nil, errors.New("failed to parse raw private_key from pem string")
+	}
+
+	ed25519PrivateKey, ok := privateKey.(*ed25519.PrivateKey)
+	if !ok {
+		return nil, errors.New("failed to assert type into *ed25519.PrivateKey")
+	}
+	myKey := *ed25519PrivateKey
+
+	return myKey, nil
 
 }
